@@ -76,7 +76,7 @@ df["Performance"] = df["Average"].apply(
 # -------------------------------------
 # 7. Dashboard KPI cards
 # -------------------------------------
-col1, col2, col3, col4 = st.columns(4)
+col1, col2, col3, col4, col5 = st.columns(5)
 
 col1.metric(
     "Total Students",
@@ -98,6 +98,10 @@ col4.metric(
     int((df["Performance"] == "Needs Support").sum())
 )
 
+col5.metric(
+    "Hiwa Omer Hassan",
+    len(df)
+)
 st.divider()
 
 # -------------------------------------
