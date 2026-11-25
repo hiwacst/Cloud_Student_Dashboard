@@ -1,25 +1,51 @@
-
 import streamlit as st
 import pandas as pd
 import plotly.express as px
 
 # -------------------------------------
-# 1. Page configuration
+# 1. ڕێکخستنی پەڕە (Page Configuration)
 # -------------------------------------
 st.set_page_config(
-    page_title="AI Student Performance Dashboard",
+    page_title="داشبۆردی ئاستی خوێندکارانی AI",
     page_icon="🎓",
     layout="wide"
 )
 
 # -------------------------------------
-# 2. Application title
+# 1.5 ستایلی ئاراستەی ڕاست بۆ چەپ (RTL CSS)
 # -------------------------------------
-st.title("🎓 AI Student Performance Dashboard")
-st.write("Cloud-based student performance analysis")
+st.markdown(
+    """
+    <style>
+    .stApp {
+        direction: rtl;
+        text-align: right;
+    }
+    h1, h2, h3, h4, h5, h6, p, label, .stMarkdown, .stAlert, .stCaption {
+        text-align: right !important;
+        direction: rtl !important;
+    }
+    [data-testid="stMetricValue"], [data-testid="stMetricLabel"] {
+        text-align: right !important;
+        direction: rtl !important;
+    }
+    input {
+        direction: rtl !important;
+        text-align: right !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 # -------------------------------------
-# 3. Load dataset
+# 2. ناونیشانی بەرنامەکە
+# -------------------------------------
+st.title("🎓 داشبۆردی هەڵسەنگاندنی ئاستی خوێندکارانی زیرەکی دەستکرد (AI)")
+st.write("شیکردنەوەی ئاستی خوێندکاران لەسەر بنەمای کڵاود (Cloud)")
+
+# -------------------------------------
+# 3. بارکردنی داتا (Load Dataset)
 # -------------------------------------
 @st.cache_data
 def load_data():
@@ -28,10 +54,10 @@ def load_data():
 df = load_data()
 
 # -------------------------------------
-# 4. Upload a new CSV dataset
+# 4. بارکردنی فایلی نوێی CSV
 # -------------------------------------
 uploaded_file = st.file_uploader(
-    "Upload student CSV file",
+    "فایلی CSVـی خوێندکاران باربکە",
     type=["csv"]
 )
 
@@ -39,7 +65,7 @@ if uploaded_file is not None:
     df = pd.read_csv(uploaded_file)
 
 # -------------------------------------
-# 5. Calculate total and average
+# 5. هەژمارکردنی کۆی گشتی و تێکڕا
 # -------------------------------------
 subjects = [
     "AI",
@@ -48,198 +74,187 @@ subjects = [
     "DataScience"
 ]
 
-df["Total"] = df[subjects].sum(axis=1)
-
-df["Average"] = df[subjects].mean(axis=1).round(2)
+df["کۆی گشتی"] = df[subjects].sum(axis=1)
+df["تێکڕا"] = df[subjects].mean(axis=1).round(2)
 
 # -------------------------------------
-# 6. Define performance level
+# 6. دیاریکردنی ئاستی خوێندکار
 # -------------------------------------
 def performance_level(score):
-
     if score >= 85:
-        return "Excellent"
-
+        return "نایاب"
     elif score >= 70:
-        return "Good"
-
+        return "زۆر باش"
     elif score >= 50:
-        return "Pass"
-
+        return "دەرچوو"
     else:
-        return "Needs Support"
+        return "پێویستی بە هاوکارییە"
 
-df["Performance"] = df["Average"].apply(
-    performance_level
-)
+df["ئاست"] = df["تێکڕا"].apply(performance_level)
 
 # -------------------------------------
-# 7. Dashboard KPI cards
+# 7. کارتەکانی ئامار (KPI Cards)
 # -------------------------------------
 col1, col2, col3, col4, col5 = st.columns(5)
 
 col1.metric(
-    "Total Students",
+    "کۆی خوێندکاران",
     len(df)
 )
 
 col2.metric(
-    "Class Average",
-    round(df["Average"].mean(), 2)
+    "تێکڕای گشتی پۆل",
+    round(df["تێکڕا"].mean(), 2)
 )
 
 col3.metric(
-    "Highest Average",
-    round(df["Average"].max(), 2)
+    "بەرزترین تێکڕا",
+    round(df["تێکڕا"].max(), 2)
 )
 
 col4.metric(
-    "Needs Support",
-    int((df["Performance"] == "Needs Support").sum())
+    "پێویستیان بە هاوکارییە",
+    int((df["ئاست"] == "پێویستی بە هاوکارییە").sum())
 )
 
 col5.metric(
-    "Hiwa Omer Hassan",
+    "هیوا عومەر حەسەن",
     len(df)
 )
+
 st.divider()
 
 # -------------------------------------
-# 8. Search student
+# 8. گەڕان بەدوای خوێندکاردا
 # -------------------------------------
-st.subheader("🔍 Student Search")
+st.subheader("🔍 گەڕان بەدوای خوێندکاردا")
 
 search = st.text_input(
-    "Enter Student Name or ID"
+    "ناو یان کۆدی خوێندکار (ID) بنووسە"
 )
 
-if search:
+# گۆڕینی ناوی ستوونەکان بۆ کوردی لە کاتی پیشاندانی خشتەکەدا
+display_df = df.rename(columns={
+    "Student_ID": "کۆدی خوێندکار",
+    "Name": "ناو",
+    "AI": "زیرەکی دەستکرد",
+    "Programming": "پڕۆگرامسازی",
+    "Statistics": "ئامار",
+    "DataScience": "زانستی داتا"
+})
 
-    filtered_df = df[
-        df["Name"].astype(str).str.contains(
+if search:
+    filtered_df = display_df[
+        display_df["ناو"].astype(str).str.contains(
             search, case=False, na=False
         ) |
-        df["Student_ID"].astype(str).str.contains(
+        display_df["کۆدی خوێندکار"].astype(str).str.contains(
             search, case=False, na=False
         )
     ]
-
-    st.dataframe(
-        filtered_df,
-        use_container_width=True
-    )
-
+    st.dataframe(filtered_df, use_container_width=True)
 else:
-
-    st.dataframe(
-        df,
-        use_container_width=True
-    )
+    st.dataframe(display_df, use_container_width=True)
 
 # -------------------------------------
-# 9. Student average chart
+# 9. هێڵکاری تێکڕای نمرەی خوێندکاران
 # -------------------------------------
-st.subheader("📊 Student Average Scores")
+st.subheader("📊 تێکڕای نمرەی خوێندکاران")
 
 fig1 = px.bar(
-    df,
-    x="Name",
-    y="Average",
-    color="Performance",
-    title="Average Score by Student",
-    text="Average"
+    display_df,
+    x="ناو",
+    y="تێکڕا",
+    color="ئاست",
+    title="تێکڕای نمرە بەپێی خوێندکار",
+    text="تێکڕا",
+    labels={
+        "ناو": "ناوی خوێندکار",
+        "تێکڕا": "تێکڕای نمرە",
+        "ئاست": "ئاستی خوێندکار"
+    }
 )
 
-fig1.update_layout(
-    yaxis_range=[0, 100]
-)
-
-st.plotly_chart(
-    fig1,
-    use_container_width=True
-)
+fig1.update_layout(yaxis_range=[0, 100])
+st.plotly_chart(fig1, use_container_width=True)
 
 # -------------------------------------
-# 10. Subject comparison
+# 10. بەراوردکردنی وانەکان
 # -------------------------------------
-st.subheader("📚 Subject Performance")
+st.subheader("📚 ئاستی وانەکان")
+
+subject_names_ku = {
+    "AI": "زیرەکی دەستکرد",
+    "Programming": "پڕۆگرامسازی",
+    "Statistics": "ئامار",
+    "DataScience": "زانستی داتا"
+}
 
 subject_avg = df[subjects].mean().reset_index()
-
-subject_avg.columns = [
-    "Subject",
-    "Average Score"
-]
+subject_avg.columns = ["وانە", "تێکڕای نمرە"]
+subject_avg["وانە"] = subject_avg["وانە"].map(subject_names_ku)
 
 fig2 = px.bar(
     subject_avg,
-    x="Subject",
-    y="Average Score",
-    color="Subject",
-    title="Average Scores by Subject"
+    x="وانە",
+    y="تێکڕای نمرە",
+    color="وانە",
+    title="تێکڕای نمرەکان بەپێی وانە"
 )
 
-fig2.update_layout(
-    yaxis_range=[0, 100]
-)
-
-st.plotly_chart(
-    fig2,
-    use_container_width=True
-)
+fig2.update_layout(yaxis_range=[0, 100])
+st.plotly_chart(fig2, use_container_width=True)
 
 # -------------------------------------
-# 11. Performance distribution
+# 11. دابەشبوونی ئاستی خوێندکاران
 # -------------------------------------
-st.subheader("🎯 Student Performance Levels")
+st.subheader("🎯 ئاستەکانی خوێندکاران")
 
 performance_counts = (
-    df["Performance"]
+    df["ئاست"]
     .value_counts()
     .reset_index()
 )
 
 performance_counts.columns = [
-    "Performance",
-    "Students"
+    "ئاست",
+    "ژمارەی خوێندکاران"
 ]
 
 fig3 = px.pie(
     performance_counts,
-    names="Performance",
-    values="Students",
-    title="Performance Distribution",
+    names="ئاست",
+    values="ژمارەی خوێندکاران",
+    title="دابەشبوونی ئاستی خوێندکاران",
     hole=0.4
 )
 
-st.plotly_chart(
-    fig3,
-    use_container_width=True
-)
+st.plotly_chart(fig3, use_container_width=True)
 
 # -------------------------------------
-# 12. Download dataset
+# 12. داگرتنی ئەنجامەکان
 # -------------------------------------
-st.subheader("📥 Download Results")
+st.subheader("📥 داگرتنی ئەنجامەکان")
 
-csv_data = df.to_csv(
+# بەکارهێنانی utf-8-sig بۆ ئەوەی پیتە کوردییەکان لە Excel بە تێکچوویی دەرنەکەون
+csv_data = display_df.to_csv(
     index=False
-).encode("utf-8")
+).encode("utf-8-sig")
 
 st.download_button(
-    label="Download Student Report CSV",
+    label="داگرتنی ڕاپۆرتی خوێندکاران (CSV)",
     data=csv_data,
-    file_name="student_report.csv",
+    file_name="student_report_kurdish.csv",
     mime="text/csv"
 )
 
 # -------------------------------------
-# 13. Footer
+# 13. بەشی کۆتایی (Footer)
 # -------------------------------------
 st.success(
-    "Application is running successfully!"
+    "بەرنامەکە بە سەرکەوتوویی کاردەکات!"
 )
 
 st.caption(
-    "Cloud Computing Laboratory | AI Department"
+    "تاقیگەی کڵاود کۆمپیوتینگ | بەشی زیرەکی دەستکرد (AI)"
 )
